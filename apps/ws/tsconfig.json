@@ -1,0 +1,17 @@
+{
+    "extend": "@repo/typscript-config/base.json",
+    "include": [
+        "src/**/*.ts"
+    ],
+    "compilerOptions": {
+        "outDir": "dist",
+        "rootDir": "src",
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "moduleResolution" : "NodeNext"
+    },
+    "exclude": [
+        "node_modules",
+        "dist"
+    ]
+}

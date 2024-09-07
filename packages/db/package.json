@@ -1,0 +1,27 @@
+{
+  "name": "@repo/db",
+  "version": "1.0.0",
+  "scripts": {
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx ./src/scripts/migrate.ts",
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "tsx ./src/scripts/seed.ts"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.9.4",
+    "dotenv": "^16.4.5",
+    "drizzle-orm": "^0.33.0",
+    "pg": "^8.12.0",
+    "postgres": "^3.4.4",
+    "socket.io": "^4.7.5",
+    "tsx": "^4.17.0"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/pg": "^8.11.8",
+    "drizzle-kit": "^0.24.1"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

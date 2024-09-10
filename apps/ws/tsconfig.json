@@ -1,14 +1,15 @@
 {
     "extend": "@repo/typscript-config/base.json",
     "include": [
-        "src/**/*.ts"
+        "src/**/*.ts", 
+        "global.d.ts",
     ],
     "compilerOptions": {
         "outDir": "dist",
         "rootDir": "src",
         "esModuleInterop": true,
         "skipLibCheck": true,
-        "moduleResolution" : "NodeNext"
+        "moduleResolution" : "NodeNext",
     },
     "exclude": [
         "node_modules",

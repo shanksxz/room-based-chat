@@ -1,25 +1,31 @@
 "use client"
-import ChatArea from "@/components/ChatArea";
-import ChatApp from "@/components/Main";
-import { signOut, useSession } from "next-auth/react";
-import { Main } from "next/document";
+
+import { useEffect } from 'react';
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Room from '@/components/Room';
 
-export default function Page() {
-  // const session = await auth();
-  // if(!session?.user.email) {
-  //   return <p>Not logged in</p>
-  // }
+export default function ChatPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
 
-  const session = useSession();
-  const router  = useRouter();
-  console.log(session);
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.replace("/auth/login");
+    }
+    console.log("status", status);
+    console.log("session", session);
+  }, [status, router]);
 
-  if(!session.data?.user.email) {
-    router.push("/auth/login");
+  if (status === 'loading') {
+    return <h1>Loading........</h1> 
   }
 
-  return (
-    <ChatApp />
-  );
+  if (status === 'authenticated' && session?.user?.email) {
+    return (
+      <Room/>
+    );
+  }
+
+  return null;
 }

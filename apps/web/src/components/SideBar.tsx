@@ -1,67 +1,72 @@
 "use client"
 
-import React, { useState } from "react"
+import { useEffect, useState } from 'react'
 import { Button } from "@repo/ui/components/ui/button"
+import { ScrollArea } from "@repo/ui/components/ui/scroll-area"
 import { Input } from "@repo/ui/components/ui/input"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@repo/ui/components/ui/dialog"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs"
-import { PlusCircle } from "lucide-react"
-import RoomList from "./RoomList"
+import { Hash, Search } from "lucide-react"
+import { getUsersRoom } from '@/actions/rooms'
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 
-interface SidebarProps {
-  rooms: { id: number; name: string; createdBy: string }[]
-  onSelectRoom: (room: { id: number; name: string; createdBy: string }) => void
+interface userRoomType {
+  userId: string;
+  roomId: string;
+  joinedAt: Date;
+  roomName: string;
 }
 
-export default function Sidebar({ rooms, onSelectRoom }: SidebarProps) {
-  const [newRoomName, setNewRoomName] = useState("")
+export default function SideBar() {
+  const [chatRooms, setChatRooms] = useState<userRoomType[] | []>([])
+  const [searchTerm, setSearchTerm] = useState("")
+  const { data: session } = useSession();
+  const router = useRouter();
 
-  const handleCreateRoom = () => {
-    console.log("Creating room:", newRoomName)
-    setNewRoomName("")
+  useEffect(() => {
+    (async () => {
+      const res = await getUsersRoom({ userId: session?.user.userId! })
+      if(res.rooms?.length === 0) {
+        return;
+      }
+      setChatRooms(res.rooms!)
+      console.log(res)
+    })()
+  }, [session])
+
+  const changeRoom = (roomId: string) => {
+    router.push(`/room/${roomId}`)
   }
 
+
   return (
-    <div className="w-64 bg-white border-r">
-      <div className="p-4">
-        <h2 className="text-xl font-bold mb-4">Chat Rooms</h2>
-        <Tabs defaultValue="all">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="my">My Rooms</TabsTrigger>
-          </TabsList>
-          <TabsContent value="all">
-            <RoomList rooms={rooms} onSelectRoom={onSelectRoom} />
-          </TabsContent>
-          <TabsContent value="my">
-            <RoomList
-              rooms={rooms.filter((room) => room.createdBy === "user")}
-              onSelectRoom={onSelectRoom}
-            />
-          </TabsContent>
-        </Tabs>
+    <div className="bg-white text-black h-screen w-64 flex flex-col border-r border-gray-200">
+      <div className="p-4 border-b border-gray-200">
+        <h2 className="text-2xl font-bold mb-4">Chat Rooms</h2>
+        <div className="relative mb-4">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+          <Input
+            placeholder="Search rooms"
+            className="pl-8 bg-white text-black border-gray-300"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
       </div>
-      <div className="p-4">
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button className="w-full">
-              <PlusCircle className="mr-2 h-4 w-4" />
-              New Room
+      <ScrollArea className="flex-1 px-4 py-2">
+        {chatRooms && 
+          chatRooms.map((room) => (
+            <Button
+              onClick={() => changeRoom(room.roomId)} 
+              key={room.roomId} 
+              variant="ghost" 
+              className="w-full justify-start mb-1 text-black hover:bg-gray-100"
+            >
+              <Hash className="mr-2 h-4 w-4" />
+              {room.roomName}
             </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New Room</DialogTitle>
-            </DialogHeader>
-            <Input
-              placeholder="Room name"
-              value={newRoomName}
-              onChange={(e) => setNewRoomName(e.target.value)}
-            />
-            <Button onClick={handleCreateRoom}>Create</Button>
-          </DialogContent>
-        </Dialog>
-      </div>
+          ))
+        }
+      </ScrollArea>
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { getMessages } from "@/actions/rooms";
+import { getMessages, getRoomName } from "@/actions/rooms";
 import Chat from "@/components/Chat";
 import { auth } from "@/server/auth";
 import { notFound } from 'next/navigation';
@@ -19,15 +19,16 @@ export default async function Page({ params }: {
         userId: session.user.userId 
     });
 
+    
     if (status !== 200) {
         if (status === 404) {
             return notFound();
         }
         return <h1>{message || 'An error occurred'}</h1>;
     }
-
+    
     return (
-        <Chat 
+        <Chat
             roomId={params.roomId} 
             initialMessages={messages} 
             userId={session.user.userId!}

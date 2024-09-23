@@ -3,7 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { db, eq, users } from "@repo/db";
 import bcrypt from "bcrypt";
 import { JWT } from "next-auth/jwt";
-import { object, string } from "zod"
+import { object, string } from "zod";
 import jwt from "jsonwebtoken";
 
 export const signInSchema = object({
@@ -14,17 +14,21 @@ export const signInSchema = object({
     .min(1, "Password is required")
     .min(8, "Password must be more than 8 characters")
     .max(32, "Password must be less than 32 characters"),
-})
+});
 
-const generateAccessToken = (user: { id: string; email: string; username: string }) => {
-  return jwt.sign(user, process.env.AUTH_SECRET!, { expiresIn: '1h' });
+const generateAccessToken = (user: {
+  userId: string;
+  email: string;
+  username: string;
+}) => {
+  return jwt.sign(user, process.env.AUTH_SECRET!, { expiresIn: "365d" });
 };
 
 declare module "next-auth" {
   interface Session {
     accessToken: string;
     user: {
-      id: string;
+      userId: string;
       email: string;
       username: string;
     } & DefaultSession["user"];
@@ -32,6 +36,7 @@ declare module "next-auth" {
   interface User {
     // id: string;
     // email: string;
+    userId: string;
     username: string;
   }
 }
@@ -39,7 +44,7 @@ declare module "next-auth" {
 declare module "next-auth/jwt" {
   interface JWT {
     accessToken: string;
-    id: string;
+    userId: string;
     email: string;
     username: string;
   }
@@ -61,29 +66,43 @@ export const {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials, request): Promise<any | null> {
-        if (!credentials?.email || !credentials?.password) return null;
-        
-        const {
-          email,
-          password,
-        } = signInSchema.parse(credentials);
-        
+        console.log("Credentials are:", credentials ?? "No credentials");
+        if (!credentials?.email || !credentials?.password) {
+          console.error("Credentials are missing");
+          return null;
+        }
+
         try {
-          const user = await db.select().from(users).where(eq(users.email, email));
-          
+          const { email, password } = signInSchema.parse(credentials);
+
+          console.log("Email and password are:", email + " " + password);
+
+          const user = await db
+            .select()
+            .from(users)
+            .where(eq(users.email, email));
+
+          console.log("User is:", user);
+
           if (!user || user.length === 0) return null;
-          
-          const isPasswordValid = await bcrypt.compare(password, user[0].password);
-          
-          if (!isPasswordValid) return null;
+
+          const isPasswordValid = await bcrypt.compare(
+            password,
+            user[0].password
+          );
+
+          console.log("Is password valid:", isPasswordValid);
+
+          if (!isPasswordValid){
+            console.error("Password is invalid");
+          };
           console.log(user[0]);
-          
+
           return {
-            id: user[0].id.toString(),
+            userId: user[0].userId.toString(),
             email: user[0].email,
             username: user[0].username,
           };
-      
         } catch (error) {
           console.error("Error during authentication:", error);
           return null;
@@ -97,11 +116,15 @@ export const {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id!;
+        token.userId = user.userId!;
         token.email = user.email!;
         token.username = user.username;
         //? I am high af right now, so I am going to add the access token here
-        token.accessToken = generateAccessToken({ id: user.id!, email: user.email!, username: user.username });
+        token.accessToken = generateAccessToken({
+          userId: user.userId,
+          email: user.email!,
+          username: user.username,
+        });
       }
       return token;
     },
@@ -111,11 +134,11 @@ export const {
         accessToken: token.accessToken,
         user: {
           ...session.user,
-          id: token.id,
+          userId: token.userId,
           email: token.email,
           username: token.username,
         },
-      }
+      };
     },
   },
 });

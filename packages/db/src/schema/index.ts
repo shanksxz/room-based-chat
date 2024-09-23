@@ -6,10 +6,11 @@ import {
   serial,
   integer
 } from "drizzle-orm/pg-core";
+
 import { relations } from "drizzle-orm";
 
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
+  userId: serial("user_id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   email: text("email").notNull().unique(),
@@ -17,20 +18,20 @@ export const users = pgTable("users", {
 });
 
 export const rooms = pgTable("rooms", {
-  id: serial("id").primaryKey(),
+  roomId: serial("room_id").primaryKey(),
   roomName: text("roomName").notNull().unique(),
-  createdBy: integer("created_by").references(() => users.id),
+  createdBy: integer("created_by").notNull().references(() => users.userId),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const messages = pgTable("messages", {
-  id: serial("id").primaryKey(),
+  messageId: serial("message_id").primaryKey(),
   roomId: integer("roomId")
     .notNull()
-    .references(() => rooms.id),
+    .references(() => rooms.roomId),
   userId: integer("userId")
     .notNull()
-    .references(() => users.id),
+    .references(() => users.userId),
   content: text("content").notNull(),
   sentAt: timestamp("sentAt").notNull().defaultNow(),
 });
@@ -40,10 +41,10 @@ export const userRooms = pgTable(
   {
     userId: integer("userId")
       .notNull()
-      .references(() => users.id),
+      .references(() => users.userId),
     roomId: integer("roomId")
       .notNull()
-      .references(() => rooms.id),
+      .references(() => rooms.roomId),
     joinedAt: timestamp("joinedAt").notNull().defaultNow(),
   },
   (table) => ({
@@ -56,29 +57,29 @@ export const roomsRelations = relations(rooms, ({ many, one }) => ({
   userRooms: many(userRooms),
   creator: one(users, {
     fields: [rooms.createdBy],
-    references: [users.id],
+    references: [users.userId],
   }),
 }));
 
 export const messagesRelations = relations(messages, ({ one }) => ({
   user: one(users, {
     fields: [messages.userId],
-    references: [users.id],
+    references: [users.userId],
   }),
   room: one(rooms, {
     fields: [messages.roomId],
-    references: [rooms.id],
+    references: [rooms.roomId],
   }),
 }));
 
 export const userRoomsRelations = relations(userRooms, ({ one }) => ({
   user: one(users, {
     fields: [userRooms.userId],
-    references: [users.id],
+    references: [users.userId],
   }),
   room: one(rooms, {
     fields: [userRooms.roomId],
-    references: [rooms.id],
+    references: [rooms.roomId],
   }),
 }));
 

@@ -66,6 +66,33 @@ export async function getRoomName({ roomId }: { roomId: string }) {
   return foo[0].roomName;
 }
 
+export async function getRoomInfo({ roomId }: { roomId: string }) {
+  try {
+    const foo = await db
+      .select()
+      .from(rooms)
+      .where(eq(rooms.roomId, parseInt(roomId)));
+
+    const users = await db
+      .select()
+      .from(userRooms)
+      .where(eq(userRooms.roomId, parseInt(roomId)));
+
+    const bar = foo.map((room) => {
+      return {
+        roomName: room.roomName,
+        createdBy: room.createdBy.toLocaleString(),
+        createdAt: room.createdAt,
+        users: users.map((user) => user.userId.toLocaleString()),
+      };
+    });
+
+    return { status: 200, roomInfo: bar[0] };
+  } catch (error) {
+    return { status: 500, message: "Internal server error" };
+  }
+}
+
 export async function getUsersRoom({ userId }: { userId: string }) {
   try {
     const foo = await db

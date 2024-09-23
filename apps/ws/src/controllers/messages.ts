@@ -5,7 +5,7 @@ import { getUsersInRoom, io } from "../socket";
 
 const messageSchema = z.object({
   roomId: z.string(),
-  text: z.string(),
+  content: z.string(),
 });
 
 export async function sendMessage(req: Request, res: Response) {
@@ -13,12 +13,12 @@ export async function sendMessage(req: Request, res: Response) {
     console.log("sendMessage");
     console.log("req.body", req.body);
     // get roomId and text from request body
-    const { roomId, text } = messageSchema.parse(req.body);
+    const { roomId, content } = messageSchema.parse(req.body);
 
     const senderId = req.user.userId;
 
     console.log("roomId", roomId);
-    console.log("text", text);
+    console.log("text", content);
     console.log("senderId", senderId);
 
     // is user in the room?
@@ -41,7 +41,7 @@ export async function sendMessage(req: Request, res: Response) {
     const foo = await db.insert(messages).values({
       roomId: parseInt(roomId),
       userId: parseInt(senderId),
-      content: text,
+      content,
     }).returning();
 
     // send message to all users in the room
@@ -50,7 +50,7 @@ export async function sendMessage(req: Request, res: Response) {
       io.to(socketId).emit("message", {
         roomId,
         userId: senderId,
-        text,
+        content,
         sentAt : foo[0].sentAt,
         messageId : foo[0].messageId
       });

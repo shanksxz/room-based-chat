@@ -1,7 +1,7 @@
 import { getMessages, getRoomName } from "@/actions/rooms";
 import Chat from "@/components/Chat";
 import { auth } from "@/server/auth";
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 
 export default async function Page({ params }: {
     params: {
@@ -10,8 +10,8 @@ export default async function Page({ params }: {
 }) {
     const session = await auth();
     
-    if (!session || !session.user.userId) {
-        return <h1>Please log in to view this chat</h1>;
+    if(!session?.user?.email) {
+        redirect("/auth/login");
     }
 
     const { status, message, messages } = await getMessages({ 
